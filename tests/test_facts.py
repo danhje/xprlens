@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import warnings
+
 from xprlens.facts import (
     read_classification,
     read_effort,
@@ -104,7 +106,10 @@ def test_presolved_problem_is_detected_and_flagged(xp):
     p.setObjective(sum(xs), sense=xp.maximize)
     before = read_shape(p)
     assert before.presolved is False
-    p.presolve()
+    with warnings.catch_warnings():
+        # presolve() is itself deprecated in 9.8; exercising it is the point here
+        warnings.simplefilter("ignore", DeprecationWarning)
+        p.presolve()
     after = read_shape(p)
     assert after.presolved is True
     assert after.input_rows == before.rows

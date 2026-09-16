@@ -86,6 +86,18 @@ def matrix_rows(prob: Any, m: int, maxcoefs: int) -> tuple[list[int], list[Any],
     coefs: list[float] = []
     fn = getattr(prob, "getRows", None)
     if fn is not None:
+        # 9.8+ accepts the legacy out-parameter form too, but deprecates it.
+        # Try the returning form first so the modern path is the one taken.
+        try:
+            result = fn(0, m - 1)
+        except TypeError:
+            result = None
+        if result is not None:
+            try:
+                start, colind, coefs = (list(part) for part in result)
+                return (start, colind, coefs)
+            except (TypeError, ValueError):
+                start, colind, coefs = [], [], []
         try:
             fn(start, colind, coefs, maxcoefs, 0, m - 1)
             return (start, colind, coefs)

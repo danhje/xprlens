@@ -47,4 +47,16 @@ jobs:
           uv venv --python ${{ matrix.python-version }}
           uv pip install -e ".[xpress]" pytest
       - name: Test
-        run: .venv/bin/python -m pytest -q -rs
+        run: .venv/bin/python -m pytest -q -rs 2>&1 | tee pytest.out
+
+      - name: No deprecated Xpress accessors were reached
+        # _compat.py is supposed to take the modern path on a current xpress.
+        # If a legacy call slips through, this job goes red rather than quietly
+        # accumulating warnings until the old names are removed.
+        run: |
+          if grep -q "Deprecated in Xpress" pytest.out; then
+            echo "::error::xprlens reached a deprecated Xpress accessor:"
+            grep "Deprecated in Xpress" pytest.out | sort -u
+            exit 1
+          fi
+          echo "no deprecated Xpress accessors reached"
