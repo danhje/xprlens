@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0          # hatch-vcs needs tags to compute a version
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+      - name: ruff check
+        run: uvx ruff@0.16.7 check --output-format=github .
+      - name: ruff format
+        run: uvx ruff@0.16.7 format --check .
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          python-version: ${{ matrix.python-version }}
+      - name: Install
+        # The `xpress` extra is installed so the solver-backed tests get a
+        # chance to run. They skip -- not fail -- when FICO's bundled community
+        # licence has expired, which it does on a date outside our control.
+        run: uv pip install --system -e ".[xpress]" pytest
+      - name: Test
+        run: python -m pytest -q -rs

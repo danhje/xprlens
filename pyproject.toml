@@ -1,0 +1,63 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "xprlens"
+dynamic = ["version"]
+description = "One-page Plotly report for a FICO Xpress problem: what it is, whether it solved, and what the numbers actually mean."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [{ name = "danhje" }]
+keywords = ["xpress", "optimization", "linear-programming", "mip", "plotly", "visualization"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3 :: Only",
+  "Topic :: Scientific/Engineering :: Mathematics",
+]
+dependencies = ["plotly>=5.18", "numpy>=1.23"]
+
+# Not affiliated with, endorsed by, or supported by FICO. "FICO" and "Xpress"
+# are trademarks of Fair Isaac Corporation. This package reads problems built
+# with the separately licensed `xpress` package; it does not bundle or
+# redistribute any part of it.
+
+[project.optional-dependencies]
+xpress = ["xpress>=9.0"]
+
+[project.urls]
+Homepage = "https://github.com/danhje/xprlens"
+Issues = "https://github.com/danhje/xprlens/issues"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/xprlens/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/xprlens"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/xprlens", "tests", "README.md", "LICENSE"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "C4", "RUF"]
+# C408: dict(...) kwargs are the idiomatic plotly style.
+# RUF001: the rendered page uses ·, ×, … deliberately.
+ignore = ["E501", "C408", "RUF001"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B011"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
