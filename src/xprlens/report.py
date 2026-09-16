@@ -6,6 +6,7 @@ import webbrowser
 from pathlib import Path
 from typing import Any
 
+from . import _compat
 from ._xp import is_inf, xpress
 from .classify import classify_rows
 from .facts import (
@@ -146,7 +147,7 @@ def report(
         name = "problem"
     page = build_page(
         title=title or f"{name} — xprlens",
-        lib_version=str(xp.getversion()),
+        lib_version=_compat.library_version(xp),
         pkg_version=_package_version(),
         status=status,
         shape=shape,

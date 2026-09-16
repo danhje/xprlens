@@ -12,6 +12,7 @@ import contextlib
 from dataclasses import dataclass, field
 from typing import Any
 
+from . import _compat
 from ._xp import enum_name, is_inf, is_unset, xpress
 
 # --------------------------------------------------------------------------
@@ -240,14 +241,10 @@ class VariableFacts:
 def read_variables(prob: Any, *, solved: bool = False) -> VariableFacts:
     a = prob.attributes
     n = int(a.cols)
-    coltype: list[str] = []
-    lb: list[float] = []
-    ub: list[float] = []
-    if n:
-        prob.getcoltype(coltype, 0, n - 1)
-        prob.getlb(lb, 0, n - 1)
-        prob.getub(ub, 0, n - 1)
-    names = prob.getnamelist(xpress().Namespaces.COLUMN, 0, n - 1) if n else []
+    coltype = _compat.col_types(prob, n)
+    lb = _compat.lower_bounds(prob, n)
+    ub = _compat.upper_bounds(prob, n)
+    names = _compat.name_list(prob, xpress().Namespaces.COLUMN, n)
 
     declared = dict.fromkeys(COLTYPE_NAMES, 0)
     for t in coltype:
@@ -507,22 +504,13 @@ def read_matrix(prob: Any) -> MatrixFacts:
     if m == 0:
         return MatrixFacts([], 0, 0.0, {})
 
-    rowtype: list[str] = []
-    rhs: list[float] = []
-    rng: list[float] = []
-    prob.getrowtype(rowtype, 0, m - 1)
-    prob.getrhs(rhs, 0, m - 1)
-    prob.getrhsrange(rng, 0, m - 1)
-    names = prob.getnamelist(xpress().Namespaces.ROW, 0, m - 1)
+    rowtype = _compat.row_types(prob, m)
+    rhs = _compat.rhs(prob, m)
+    rng = _compat.rhs_range(prob, m)
+    names = _compat.name_list(prob, xpress().Namespaces.ROW, m)
 
-    start: list[int] = []
-    colind: list[Any] = []
-    coefs: list[float] = []
-    prob.getrows(start, colind, coefs, int(a.elems) + m + 1, 0, m - 1)
-
-    indices: list[int] = []
-    for c in colind:
-        indices.append(c if isinstance(c, int) else prob.getIndex(c))
+    start, colind, coefs = _compat.matrix_rows(prob, m, int(a.elems) + m + 1)
+    indices = [_compat.column_index(prob, c) for c in colind]
 
     rows: list[Row] = []
     for i in range(m):
@@ -572,9 +560,7 @@ def _range_of(
 
 def read_numerics(prob: Any, mat: MatrixFacts, var: VariableFacts) -> NumericsFacts:
     matrix_vals = [c for r in mat.rows for c in r.coefs]
-    obj: list[float] = []
-    if var.n:
-        prob.getobj(obj, 0, var.n - 1)
+    obj = _compat.obj_coefficients(prob, var.n)
     rhs_vals = [r.rhs for r in mat.rows]
     bnd_vals = list(var.lb) + list(var.ub)
 
