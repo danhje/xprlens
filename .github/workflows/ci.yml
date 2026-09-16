@@ -43,6 +43,8 @@ jobs:
         # The `xpress` extra is installed so the solver-backed tests get a
         # chance to run. They skip -- not fail -- when FICO's bundled community
         # licence has expired, which it does on a date outside our control.
-        run: uv pip install --system -e ".[xpress]" pytest
+        run: |
+          uv venv --python ${{ matrix.python-version }}
+          uv pip install -e ".[xpress]" pytest
       - name: Test
-        run: python -m pytest -q -rs
+        run: .venv/bin/python -m pytest -q -rs
