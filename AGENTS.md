@@ -219,12 +219,40 @@ Roughly half the suite is solver-free by design — sentinel arithmetic, the
 constraint classifier and the slice geometry all run on hand-built inputs, so
 CI keeps real coverage even when no licence is available.
 
+## Versions, accessor renames, and the CI guard
+
+Xpress 9.8 renamed every problem accessor xprlens uses, from the C-style
+`getlb(out_list, first, last)` to `getLB(first, last) -> list`; 9.9 renamed
+`xpress.getversion` to `xpress.getVersion`; and `var.index` replaces
+`problem.getIndex`. The old spellings still work and emit
+`DeprecationWarning`, so they are on their way out.
+
+`_compat.py` supports both: each helper tries the modern call and falls back
+to the legacy one. Note that on 9.8+ some of the new names **also accept the
+legacy signature** and merely warn — `getRows` does — so a `TypeError`-based
+fallback is not enough on its own; try the returning form first.
+
+**The guard that this is working is a CI step, not a pytest setting.** A
+`filterwarnings = ["error:Deprecated in Xpress:..."]` entry in pyproject was
+tried and did *not* error on these warnings; CI passed with eight of them in
+the log. It looked like a guard and was not. The working version greps the
+pytest output for `Deprecated in Xpress` lines originating in `src/xprlens/`
+and fails the job. It is scoped to package source deliberately: a test may call
+a deprecated API on purpose, as the presolve test does.
+
 ## Platform note
 
 The macOS wheels for `xpress` 9.9.x are arm64 only, and `xpresslibs` from 9.6.1
 onward tags its Intel-mac wheel `macosx_14_0`. Development on an Intel Mac
-below macOS 14 is pinned to `xpress==9.6.0`. The 9.9.x API has not been
-verified against this code.
+below macOS 14 is therefore pinned to `xpress==9.6.0`, which has only the
+legacy accessor names — so local runs exercise the fallback path and CI
+exercises the modern one. Between them both branches of `_compat.py` are
+covered.
+
+CI installs the newest `xpress` (9.9.1 at the time of writing) on Linux, and
+the full suite passes there with the solver actually running: the community
+licence bundled with 9.9.1 is currently valid. That is not something to rely
+on — it has an expiry date — which is why the skip path exists.
 
 ## Conventions
 
