@@ -52,11 +52,12 @@ jobs:
       - name: No deprecated Xpress accessors were reached
         # _compat.py is supposed to take the modern path on a current xpress.
         # If a legacy call slips through, this job goes red rather than quietly
-        # accumulating warnings until the old names are removed.
+        # accumulating warnings until the old names are removed. Scoped to
+        # src/xprlens: a test may call a deprecated API deliberately.
         run: |
-          if grep -q "Deprecated in Xpress" pytest.out; then
+          if grep "Deprecated in Xpress" pytest.out | grep -q "src/xprlens/"; then
             echo "::error::xprlens reached a deprecated Xpress accessor:"
-            grep "Deprecated in Xpress" pytest.out | sort -u
+            grep "Deprecated in Xpress" pytest.out | grep "src/xprlens/" | sort -u
             exit 1
           fi
-          echo "no deprecated Xpress accessors reached"
+          echo "no deprecated Xpress accessors reached from src/xprlens"

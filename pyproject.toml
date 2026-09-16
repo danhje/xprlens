@@ -61,7 +61,6 @@ ignore = ["E501", "C408", "RUF001"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
-# Any Xpress deprecation reaching a test means _compat.py fell back to a
-# legacy accessor. Fail rather than warn, so CI (which installs the newest
-# xpress) proves the modern path is the one being taken.
-filterwarnings = ["error:Deprecated in Xpress:DeprecationWarning"]
+# Deprecated-accessor detection is a CI step (see .github/workflows/ci.yml),
+# not a filterwarnings entry: an ini filter did not actually error on these
+# warnings, which made it a guard that looked real and was not.
