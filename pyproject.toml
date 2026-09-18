@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "xprlens"
 dynamic = ["version"]
-description = "One-page Plotly report for a FICO Xpress problem: what it is, whether it solved, and what the numbers actually mean."
+description = "Plotly reports and interactive 2D slices for FICO Xpress problems."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"

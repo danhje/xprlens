@@ -10,10 +10,12 @@
 
 ## Project overview
 
-A Python package that takes a live `xpress.problem` and writes one
-self-contained HTML page describing it.
+A Python package that takes a live `xpress.problem` and writes self-contained
+HTML reports and interactive 2D slice explorers.
 
 - `src/xprlens/report.py` — the public `report()` entry point and section wiring.
+- `src/xprlens/explorer.py` — the public `slice_explorer()` entry point and
+  browser-side interactive slice renderer.
 - `src/xprlens/facts.py` — reads the problem. **Every trap below lives here.**
 - `src/xprlens/classify.py` — MIPLIB-style constraint shape classification.
 - `src/xprlens/slice2d.py` — 2D slice geometry (half-plane clipping).
@@ -27,7 +29,8 @@ checkout without `.git` cannot build), `ruff` via pre-commit, pytest.
 
 1. **Never mutate the caller's problem.** No setting controls, no changing
    bounds, no triggering a solve. `test_report_does_not_modify_the_problem`
-   guards this; keep it passing.
+  and `test_slice_explorer_has_variable_controls_and_does_not_modify_problem`
+  guard this; keep them passing.
 2. **Never display a number the problem cannot support.** Xpress returns
    sentinels rather than raising, so silence is the correct output far more
    often than it looks. When in doubt, omit the figure and say why.

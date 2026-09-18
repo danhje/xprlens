@@ -182,6 +182,8 @@ def _resolve_pair(spec, variables) -> tuple[int, int] | None:
             idx.append(variables.names.index(item))
         else:
             idx.append(int(item))
+    if any(index < 0 or index >= variables.n for index in idx):
+        raise ValueError(f"slice_vars indices must be between 0 and {variables.n - 1}")
     if idx[0] == idx[1]:
         raise ValueError("slice_vars must name two different variables")
     return (idx[0], idx[1])

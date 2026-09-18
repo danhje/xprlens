@@ -1,7 +1,7 @@
 # xprlens
 
-One-page Plotly report for a [FICO Xpress](https://www.fico.com/en/products/fico-xpress-optimization)
-problem: what it is, whether it solved, and what the numbers actually mean.
+Plotly reports and interactive 2D slices for
+[FICO Xpress](https://www.fico.com/en/products/fico-xpress-optimization) problems.
 
 ```sh
 pip install xprlens
@@ -49,11 +49,22 @@ xprlens.report(p, sections=["status", "classification", "objective", "effort"])
 `xprlens.ALL_SECTIONS` lists every name; `xprlens.MATRIX_SECTIONS` lists the
 expensive ones (`constraints`, `numerics`, `sparsity`, `slice`).
 
-### The 2D slice
+### Interactive 2D slices
 
-By default the slice is taken through the two variables appearing in the most
-constraints, at the returned solution if there is one. Choose your own pair by
-index or by name:
+Use the separate slice explorer to choose either axis interactively:
+
+```python
+xprlens.slice_explorer(p, path="slice.html", open_browser=True)
+```
+
+This writes a self-contained Plotly page with selectors for every variable.
+Changing a selector recomputes the slice in the browser, so it needs no Python
+server and does not touch the Xpress problem again. Set the initial pair by name
+or index with `slice_vars=("x", "y")`.
+
+The one-page report still includes a static 2D slice. By default it is taken
+through the two variables appearing in the most constraints, at the returned
+solution if there is one. Choose its pair with:
 
 ```python
 xprlens.report(p, slice_vars=("x", "y"))

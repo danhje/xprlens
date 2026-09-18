@@ -1,4 +1,4 @@
-"""One-page Plotly report for a FICO Xpress problem.
+"""Plotly reports and interactive 2D slices for FICO Xpress problems.
 
 Not affiliated with, endorsed by, or supported by FICO. "FICO" and "Xpress"
 are trademarks of Fair Isaac Corporation.
@@ -6,6 +6,7 @@ are trademarks of Fair Isaac Corporation.
 
 from __future__ import annotations
 
+from .explorer import slice_explorer
 from .report import ALL_SECTIONS, MATRIX_SECTIONS, report
 
 try:
@@ -13,4 +14,4 @@ try:
 except ImportError:  # pragma: no cover - source checkout without a build
     __version__ = "0+unknown"
 
-__all__ = ["ALL_SECTIONS", "MATRIX_SECTIONS", "__version__", "report"]
+__all__ = ["ALL_SECTIONS", "MATRIX_SECTIONS", "__version__", "report", "slice_explorer"]
