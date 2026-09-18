@@ -18,6 +18,7 @@ from .facts import (
     ModelShape,
     NumericsFacts,
     ObjectiveFacts,
+    Row,
     Status,
     VariableFacts,
 )
@@ -96,13 +97,34 @@ def _bar(counts: dict[str, int], title: str, color: str) -> go.Figure:
     return fig
 
 
+def _constraint_text(row: Row, variables: VariableFacts, max_length: int = 180) -> str:
+    terms: list[str] = []
+    for col, coef in zip(row.cols, row.coefs, strict=False):
+        magnitude = abs(coef)
+        variable = variables.names[col]
+        term = variable if magnitude == 1 else f"{magnitude:.10g} {variable}"
+        if not terms:
+            terms.append(f"-{term}" if coef < 0 else term)
+        else:
+            terms.append(f"{'-' if coef < 0 else '+'} {term}")
+    expression = " ".join(terms) or "0"
+    if row.kind == "R":
+        text = f"{row.rhs - abs(row.rng):.10g} <= {expression} <= {row.rhs:.10g}"
+    elif row.kind == "N":
+        text = f"{expression} (non-binding)"
+    else:
+        text = f"{expression} {ROWTYPE_NAMES.get(row.kind, row.kind)} {row.rhs:.10g}"
+    return text if len(text) <= max_length else f"{text[: max_length - 1]}…"
+
+
 def _sparsity_fig(
     mat: MatrixFacts, variables: VariableFacts, cap: int
 ) -> tuple[go.Figure, str | None]:
     xs: list[int] = []
     ys: list[int] = []
-    details: list[tuple[str, str, str, str, float]] = []
+    details: list[tuple[str, str, str, str, float, str]] = []
     for row in mat.rows:
+        constraint_text = _constraint_text(row, variables)
         for c, coef in zip(row.cols, row.coefs, strict=False):
             xs.append(c)
             ys.append(row.index)
@@ -113,6 +135,7 @@ def _sparsity_fig(
                     row.name,
                     ROWTYPE_NAMES.get(row.kind, row.kind),
                     coef,
+                    constraint_text,
                 )
             )
     note = None
@@ -133,6 +156,7 @@ def _sparsity_fig(
             hovertemplate=(
                 "<b>%{customdata[0]}</b> (%{customdata[1]})<br>"
                 "constraint: %{customdata[2]} (%{customdata[3]})<br>"
+                "%{customdata[5]}<br>"
                 "coefficient: %{customdata[4]:.6g}<br>"
                 "column %{x}, row %{y}<extra></extra>"
             ),

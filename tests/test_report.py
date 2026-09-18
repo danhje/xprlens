@@ -5,8 +5,8 @@ from __future__ import annotations
 import pytest
 
 from xprlens import ALL_SECTIONS, report
-from xprlens.facts import read_matrix, read_variables
-from xprlens.render import _sparsity_fig
+from xprlens.facts import Row, read_matrix, read_variables
+from xprlens.render import _constraint_text, _sparsity_fig
 
 
 def test_report_on_unsolved_problem(mip, tmp_path):
@@ -34,8 +34,31 @@ def test_sparsity_hover_identifies_variable_constraint_and_coefficient(mip):
     fig, _ = _sparsity_fig(read_matrix(mip), read_variables(mip), cap=60_000)
     trace = fig.data[0]
 
-    assert list(trace.customdata[0]) == ["b1", "binary", "R1", "<=", 3.0]
+    assert list(trace.customdata[0]) == [
+        "b1",
+        "binary",
+        "R1",
+        "<=",
+        3.0,
+        "3 b1 + 4 b2 + 2 g1 + c1 <= 20",
+    ]
     assert "coefficient: %{customdata[4]:.6g}" in trace.hovertemplate
+
+
+def test_constraint_hover_text_is_capped(mip):
+    variables = read_variables(mip)
+    row = Row(0, "long", "L", 10, 0, [0] * 100, [1] * 100)
+
+    text = _constraint_text(row, variables)
+
+    assert len(text) == 180
+    assert text.endswith("…")
+
+
+def test_constraint_hover_text_formats_ranged_rows(mip):
+    row = Row(0, "ranged", "R", 7, 4, [0, 1], [-1, 2])
+
+    assert _constraint_text(row, read_variables(mip)) == "3 <= -b1 + 2 b2 <= 7"
 
 
 def test_report_does_not_modify_the_problem(mip, tmp_path):
