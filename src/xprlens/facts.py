@@ -139,6 +139,13 @@ class ModelShape:
     note: str | None
 
 
+def _entity_count(prob: Any, accessor: str, fallback: int) -> int:
+    try:
+        return len(getattr(prob, accessor)())
+    except Exception:
+        return fallback
+
+
 def read_shape(prob: Any) -> ModelShape:
     """Detect whether the accessors still describe the caller's model.
 
@@ -152,6 +159,10 @@ def read_shape(prob: Any) -> ModelShape:
     rows, cols = int(a.rows), int(a.cols)
     in_rows, in_cols = int(a.inputrows), int(a.inputcols)
     presolved = (rows, cols) != (in_rows, in_cols)
+    if not presolved:
+        rows = max(rows, _entity_count(prob, "getConstraint", rows))
+        cols = max(cols, _entity_count(prob, "getVariable", cols))
+        in_rows, in_cols = max(in_rows, rows), max(in_cols, cols)
     note = None
     if presolved:
         note = (
@@ -180,7 +191,11 @@ class Classification:
 
 def read_classification(prob: Any) -> Classification:
     a = prob.attributes
-    mipents = int(a.mipents)
+    n = _entity_count(prob, "getVariable", int(a.cols))
+    try:
+        mipents = sum(t != "C" for t in _compat.col_types(prob, n))
+    except Exception:
+        mipents = int(a.mipents)
     qobj = int(a.qelems) > 0
     qcon = int(a.qconstraints) > 0
     nonlinear = int(getattr(a, "nonlinearconstraints", 0) or 0) > 0
@@ -240,7 +255,7 @@ class VariableFacts:
 
 def read_variables(prob: Any, *, solved: bool = False) -> VariableFacts:
     a = prob.attributes
-    n = int(a.cols)
+    n = _entity_count(prob, "getVariable", int(a.cols))
     coltype = _compat.col_types(prob, n)
     lb = _compat.lower_bounds(prob, n)
     ub = _compat.upper_bounds(prob, n)
@@ -493,14 +508,15 @@ class MatrixFacts:
     rowtypes: dict[str, int]
 
 
-def read_matrix(prob: Any) -> MatrixFacts:
+def read_matrix(prob: Any, *, rows: int | None = None, cols: int | None = None) -> MatrixFacts:
     """Read the full constraint matrix, row-wise.
 
     ``getrows`` hands back *variable objects* in the index array in this API,
     not integers, so they are mapped through ``getIndex``.
     """
     a = prob.attributes
-    m, n = int(a.rows), int(a.cols)
+    m = int(a.rows) if rows is None else rows
+    n = int(a.cols) if cols is None else cols
     if m == 0:
         return MatrixFacts([], 0, 0.0, {})
 

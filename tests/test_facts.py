@@ -91,6 +91,33 @@ def test_shape_reports_not_presolved_for_a_normal_problem(mip):
     assert shape.cols == shape.input_cols
 
 
+def test_unsolved_structure_survives_stale_aggregate_attributes(mip):
+    class StaleAttributes:
+        def __getattr__(self, name):
+            if name in {"rows", "cols", "inputrows", "inputcols", "mipents", "elems"}:
+                return 0
+            return getattr(mip.attributes, name)
+
+    class StaleProblem:
+        attributes = StaleAttributes()
+
+        def __getattr__(self, name):
+            return getattr(mip, name)
+
+    stale = StaleProblem()
+    shape = read_shape(stale)
+    variables = read_variables(stale)
+    classification = read_classification(stale)
+    matrix = read_matrix(stale, rows=shape.rows, cols=shape.cols)
+
+    assert (shape.rows, shape.cols) == (4, 6)
+    assert variables.n == 6
+    assert variables.binary_declared == 2
+    assert classification.label == "MILP"
+    assert classification.features["MIP entities"] == 4
+    assert len(matrix.rows) == 4
+
+
 def test_presolved_problem_is_detected_and_flagged(xp):
     # Trap F: after an explicit presolve the accessors describe the presolved
     # matrix, and originalrows/originalcols follow it down. postsolve() does

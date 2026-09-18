@@ -140,6 +140,12 @@ Detection is `rows != inputrows or cols != inputcols`. Do **not** use
 testing, and the bits that did (5, 6, 18–22) are undocumented. Bit 7
 ("solution in memory is valid") does behave as documented.
 
+On some unsolved model-building paths the aggregate shape attributes can still
+read zero while `getVariable()` / `getConstraint()` expose the model entities.
+When the problem is not presolved, use those object accessors for the report's
+row and column counts, and derive MIP entities from `getColType()` rather than
+trusting `mipents` alone.
+
 In the ordinary `p.optimize()` flow the counts come back correct; the trap
 only bites on an explicitly presolved problem.
 

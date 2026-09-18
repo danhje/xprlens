@@ -126,7 +126,7 @@ def report(
         if {"variables", "constraints", "numerics", "sparsity", "slice"} & set(wanted):
             variables = read_variables(prob, solved=status.started)
         if MATRIX_SECTIONS & set(wanted):
-            matrix = read_matrix(prob)
+            matrix = read_matrix(prob, rows=shape.rows, cols=shape.cols)
         if matrix is not None and variables is not None:
             if "constraints" in wanted:
                 shapes = classify_rows(matrix.rows, variables)
