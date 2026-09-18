@@ -5,6 +5,8 @@ from __future__ import annotations
 import pytest
 
 from xprlens import ALL_SECTIONS, report
+from xprlens.facts import read_matrix, read_variables
+from xprlens.render import _sparsity_fig
 
 
 def test_report_on_unsolved_problem(mip, tmp_path):
@@ -26,6 +28,14 @@ def test_report_on_solved_lp(lp, tmp_path):
     lp.optimize()
     page = report(lp, path=tmp_path / "r.html").read_text(encoding="utf-8")
     assert "LP" in page
+
+
+def test_sparsity_hover_identifies_variable_constraint_and_coefficient(mip):
+    fig, _ = _sparsity_fig(read_matrix(mip), read_variables(mip), cap=60_000)
+    trace = fig.data[0]
+
+    assert list(trace.customdata[0]) == ["b1", "binary", "R1", "<=", 3.0]
+    assert "coefficient: %{customdata[4]:.6g}" in trace.hovertemplate
 
 
 def test_report_does_not_modify_the_problem(mip, tmp_path):

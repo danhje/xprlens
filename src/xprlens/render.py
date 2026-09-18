@@ -96,17 +96,29 @@ def _bar(counts: dict[str, int], title: str, color: str) -> go.Figure:
     return fig
 
 
-def _sparsity_fig(mat: MatrixFacts, nvars: int, cap: int) -> tuple[go.Figure, str | None]:
+def _sparsity_fig(
+    mat: MatrixFacts, variables: VariableFacts, cap: int
+) -> tuple[go.Figure, str | None]:
     xs: list[int] = []
     ys: list[int] = []
+    details: list[tuple[str, str, str, str, float]] = []
     for row in mat.rows:
-        for c in row.cols:
+        for c, coef in zip(row.cols, row.coefs, strict=False):
             xs.append(c)
             ys.append(row.index)
+            details.append(
+                (
+                    variables.names[c],
+                    COLTYPE_NAMES.get(variables.coltype[c], variables.coltype[c]),
+                    row.name,
+                    ROWTYPE_NAMES.get(row.kind, row.kind),
+                    coef,
+                )
+            )
     note = None
     if len(xs) > cap:
         step = len(xs) // cap + 1
-        xs, ys = xs[::step], ys[::step]
+        xs, ys, details = xs[::step], ys[::step], details[::step]
         note = (
             f"Showing every {step}th non-zero ({len(xs):,} of {mat.nnz:,} points). The pattern "
             "is indicative; gaps here are sampling, not structure."
@@ -115,14 +127,20 @@ def _sparsity_fig(mat: MatrixFacts, nvars: int, cap: int) -> tuple[go.Figure, st
         go.Scattergl(
             x=xs,
             y=ys,
+            customdata=details,
             mode="markers",
             marker=dict(size=3, color=_PALETTE["accent"], opacity=0.6),
-            hovertemplate="col %{x}, row %{y}<extra></extra>",
+            hovertemplate=(
+                "<b>%{customdata[0]}</b> (%{customdata[1]})<br>"
+                "constraint: %{customdata[2]} (%{customdata[3]})<br>"
+                "coefficient: %{customdata[4]:.6g}<br>"
+                "column %{x}, row %{y}<extra></extra>"
+            ),
         )
     )
     fig.update_layout(
         title="Non-zero pattern of the constraint matrix",
-        xaxis_title=f"column (0 … {max(nvars - 1, 0)})",
+        xaxis_title=f"column (0 … {max(variables.n - 1, 0)})",
         yaxis_title=f"row (0 … {max(len(mat.rows) - 1, 0)})",
         yaxis=dict(autorange="reversed"),
         height=460,
@@ -389,7 +407,7 @@ def build_page(
         parts.append(_section("Numerics", body, anchor="num"))
 
     if "sparsity" in sections and matrix is not None and matrix.nnz and variables is not None:
-        fig, note = _sparsity_fig(matrix, variables.n, sparsity_cap)
+        fig, note = _sparsity_fig(matrix, variables, sparsity_cap)
         body = _fig_html(fig, first_fig)
         first_fig = False
         body += _notes([note] if note else [])
