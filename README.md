@@ -57,10 +57,14 @@ Use the separate slice explorer to choose either axis interactively:
 xprlens.slice_explorer(p, path="slice.html", open_browser=True)
 ```
 
-This writes a self-contained Plotly page with selectors for every variable.
-Changing a selector recomputes the slice in the browser, so it needs no Python
-server and does not touch the Xpress problem again. Set the initial pair by name
-or index with `slice_vars=("x", "y")`.
+This writes a self-contained HTML and SVG page with selectors for both axes and
+a slider for every other variable. Fixed variables default to the solution
+returned by Xpress, or to the midpoint of their bounds when no solution exists.
+The page draws exact continuous, integer, semi-continuous and semi-integer domain
+pieces, the sliced continuous relaxation, the best point in the slice and its
+objective iso-line. All geometry is recomputed in the browser, so the page needs
+no Python server and does not touch the Xpress problem again. Set the initial
+pair by name or index with `slice_vars=("x", "y")`.
 
 The one-page report still includes a static 2D slice. By default it is taken
 through the two variables appearing in the most constraints, at the returned

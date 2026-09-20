@@ -18,10 +18,14 @@ def test_slice_explorer_has_variable_controls_and_does_not_modify_problem(mip, t
     out = slice_explorer(mip, path=tmp_path / "slice.html")
     page = out.read_text(encoding="utf-8")
 
-    assert "id='x-variable'" in page
-    assert "id='y-variable'" in page
-    assert "Plotly.react" in page
-    assert '"names":["b1","b2","g1","i01","c1","free"]' in page
+    assert "id='h-variable'" in page
+    assert "id='v-variable'" in page
+    assert "id='fixed-variable'" in page
+    assert "id='fixed-value'" in page
+    assert "calculateSlice" in page
+    assert "Plotly" not in page
+    assert '"vars":[{"name":"b1","type":"B"' in page
+    assert '"c":[5.0,4.0,3.0,1.0,1.0,0.0]' in page
     assert "<script src=" not in page
     assert before == (
         mip.attributes.rows,
@@ -29,6 +33,21 @@ def test_slice_explorer_has_variable_controls_and_does_not_modify_problem(mip, t
         mip.attributes.mipents,
         int(mip.attributes.solvestatus),
     )
+
+
+def test_slice_explorer_serializes_semicontinuous_threshold(xp, tmp_path):
+    problem = xp.problem()
+    problem.setOutputEnabled(False)
+    semi = problem.addVariable(name="semi", lb=0, ub=6, vartype=xp.semicontinuous, threshold=2.0)
+    other = problem.addVariable(name="other", lb=0, ub=4)
+    problem.addConstraint(semi + other <= 7)
+    problem.setObjective(3 * semi + other + 7, sense=xp.maximize)
+
+    page = slice_explorer(problem, path=tmp_path / "slice.html").read_text(encoding="utf-8")
+
+    assert '"name":"semi","type":"S","lo":0.0,"hi":6.0,"threshold":2.0' in page
+    assert '"offset":7.0' in page
+    assert "Semi-variable gap" in page
 
 
 def test_slice_explorer_accepts_an_initial_pair_by_name(mip, tmp_path):

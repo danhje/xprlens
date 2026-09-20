@@ -14,8 +14,9 @@ A Python package that takes a live `xpress.problem` and writes self-contained
 HTML reports and interactive 2D slice explorers.
 
 - `src/xprlens/report.py` — the public `report()` entry point and section wiring.
-- `src/xprlens/explorer.py` — the public `slice_explorer()` entry point and
-  browser-side interactive slice renderer.
+- `src/xprlens/explorer.py` — compatibility import for the public `slice_explorer()` entry point.
+- `src/xprlens/_explorer_viz.py` — model serialization and the browser-side interactive SVG
+  slice renderer.
 - `src/xprlens/facts.py` — reads the problem. **Every trap below lives here.**
 - `src/xprlens/classify.py` — MIPLIB-style constraint shape classification.
 - `src/xprlens/slice2d.py` — 2D slice geometry (half-plane clipping).
